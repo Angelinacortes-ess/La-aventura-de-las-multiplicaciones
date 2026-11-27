@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>La aventura de las multiplicaciones | 3.º de primaria</title>
+<style>
+:root{--purple:#6541b8;--ink:#33264d;--paper:#fffaf0;--muted:#746985}
+*{box-sizing:border-box}
+body{margin:0;font-family: "Trebuchet MS",Arial,sans-serif;background:linear-gradient(135deg,#fff5dc,#f4eaff);color:var(--ink)}
+header{background:linear-gradient(120deg,#6844bd,#8b5cf6);color:white;text-align:center;padding:30px 16px 26px}
+header .eyebrow{font-weight:800;letter-spacing:2px;color:#ffe68a;font-size:.85rem}
+h1{font-size:clamp(1.8rem,5vw,3rem);margin:8px 0}
+header p{margin:8px auto 0;max-width:650px;line-height:1.5}
+main{width:min(1000px,94%);margin:24px auto 50px}
+.panel{background:#fff;border-radius:20px;padding:20px;margin:18px 0;box-shadow:0 8px 24px #49308014}
+.tabs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+button,.tab{border:0;border-radius:12px;padding:12px 17px;font-weight:800;cursor:pointer;font-size:1rem}
+.tab{background:#eee8fa;color:#583a9c}
+.tab.active,button.primary{background:var(--purple);color:white}
+button.secondary{background:#f1ebfb;color:#583a9c}
+button:focus-visible,.tab:focus-visible,.option:focus-visible{outline:3px solid #ffbf47;outline-offset:3px}
+h2{margin:0 0 8px;color:#51338e}
+.note{color:var(--muted);line-height:1.5;margin-top:4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:14px}
+.card{min-height:160px;border-radius:18px;border:3px solid var(--c);background:var(--c);color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:14px;cursor:pointer;transition:transform .18s,box-shadow .18s}
+.card:hover{transform:translateY(-4px);box-shadow:0 8px 18px #33264d22}
+.card .small{font-size:.8rem;font-weight:800;letter-spacing:1px}
+.card .emoji{font-size:2rem;margin:7px}
+.card .equation{font-size:2rem;font-weight:900}
+.card .answer{font-size:2.2rem;font-weight:900;color:#5b3a9d}
+.card.revealed{background:#fff;color:#51338e}
+.card .hint{font-size:.78rem;margin-top:8px}
+.hidden{display:none!important}
+label{display:block;font-weight:800;margin-bottom:7px}
+input[type=text]{width:100%;max-width:420px;border:2px solid #ded3f3;border-radius:10px;padding:12px;font-size:1rem}
+.quiz-top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.progress{height:12px;background:#eee8fa;border-radius:20px;overflow:hidden;margin:12px 0 18px}
+.progress span{display:block;height:100%;background:#8b5cf6;width:0;transition:width .2s}
+.question{background:#f6f0ff;border-radius:16px;padding:22px;text-align:center;margin:15px 0}
+.question .equation{font-size:clamp(2.4rem,7vw,3.6rem);font-weight:900;color:#59399e}
+.options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.option{background:#fff;border:2px solid #ded3f3;color:#49336f}
+.option.selected{background:#e9defe;border-color:#704bc0}
+.option:disabled{cursor:default;opacity:.85}
+.feedback{font-weight:800;min-height:25px;margin:12px 0}
+.result{background:#f2ebff;border-radius:18px;padding:22px;text-align:center}
+.result .score{font-size:3.5rem;font-weight:900;color:#603eb0}
+footer{text-align:center;color:#7d718d;font-size:.85rem;padding:10px}
+@media(max-width:520px){.options{grid-template-columns:1fr 1fr}.panel{padding:15px}.card{min-height:145px}}
+@media print{header{background:#6844bd!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.tabs,#practice,#quiz,.no-print{display:none!important}#results{display:block!important}.panel{box-shadow:none}}
+</style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">¡APRENDE JUGANDO!</div>
+  <h1>🧠 La aventura de las multiplicaciones</h1>
+  <p>Tarjetas mágicas y evaluación interactiva · 3.º de primaria</p>
+</header>
+<main>
+  <section class="panel">
+    <div class="tabs no-print">
+      <button class="tab active" id="practiceTab" type="button">🃏 Practicar</button>
+      <button class="tab" id="quizTab" type="button">✏️ Evaluarme</button>
+    </div>
+    <section id="practice">
+      <h2>¡Voltea las tarjetas!</h2>
+      <p class="note">Lee la multiplicación, piensa el resultado y toca la tarjeta para descubrir la respuesta.</p>
+      <div class="cards" id="cards"></div>
+      <p class="note" id="practiceCount" aria-live="polite">Has descubierto 0 de 10 tarjetas.</p>
+      <button class="secondary no-print" id="resetPractice" type="button">↻ Reiniciar tarjetas</button>
+    </section>
+    <section id="quiz" class="hidden">
+      <h2>Evaluación: ¿cuánto aprendiste?</h2>
+      <p class="note">Responde las 10 preguntas. Cada respuesta correcta vale 1 punto. Al terminar podrás ver tu resultado.</p>
+      <div style="margin:16px 0">
+        <label for="studentName">Nombre del alumno o alumna</label>
+        <input id="studentName" type="text" maxlength="60" placeholder="Escribe tu nombre">
+      </div>
+      <div class="quiz-top"><strong id="questionNumber">Pregunta 1 de 10</strong><strong id="liveScore">Aciertos: 0</strong></div>
+      <div class="progress"><span id="progressBar"></span></div>
+      <div class="question">
+        <div class="note">¿Cuánto es…?</div>
+        <div class="equation" id="quizEquation">2 × 3 = ?</div>
+      </div>
+      <div class="options" id="options"></div>
+      <div class="feedback" id="feedback" aria-live="polite"></div>
+      <div class="quiz-top">
+        <button class="secondary" id="restartQuiz" type="button">Reiniciar evaluación</button>
+        <button class="primary" id="nextQuestion" type="button" disabled>Siguiente →</button>
+      </div>
+    </section>
+    <section id="results" class="hidden">
+      <div class="result">
+        <h2>🎉 ¡Evaluación terminada!</h2>
+        <p id="resultName"></p>
+        <div class="score" id="scoreText">0/10</div>
+        <h2 id="gradeText">Calificación: 0</h2>
+        <p id="resultMessage"></p>
+        <p id="resultDate" class="note"></p>
+      </div>
+      <div class="panel" style="box-shadow:none;border:1px solid #eee5fa">
+        <h2>Revisión de respuestas</h2>
+        <div id="review"></div>
+      </div>
+      <div class="tabs no-print">
+        <button class="primary" id="printResult" type="button">🖨️ Imprimir / Guardar PDF</button>
+        <button class="secondary" id="again" type="button">↻ Volver a intentar</button>
+      </div>
+      <p class="note">Sugerencia para Classroom: el alumno puede imprimir o guardar esta pantalla como PDF y entregar el archivo en la tarea.</p>
+    </section>
+  </section>
+  <footer>Material didáctico de Matemáticas · Tercer grado de primaria</footer>
+</main>
+<script>
+const data=[
+ {a:2,b:3,c:"#ff6b6b",e:"🍎"},{a:4,b:5,c:"#ffad42",e:"⭐"},
+ {a:3,b:7,c:"#38aee8",e:"🚀"},{a:6,b:4,c:"#9b7bea",e:"🦄"},
+ {a:8,b:2,c:"#2ebd8b",e:"🐸"},{a:9,b:3,c:"#e66cae",e:"🦋"},
+ {a:7,b:7,c:"#f28b38",e:"🦁"},{a:5,b:8,c:"#25b9ad",e:"🐢"},
+ {a:6,b:9,c:"#7185e8",e:"🐙"},{a:10,b:7,c:"#d66bd6",e:"🌈"}
+];
+const $=id=>document.getElementById(id);
+let revealed=new Set(),index=0,answers=[],selected=null,quizOrder=[];
+function renderCards(){
+ $('cards').innerHTML=data.map((d,i)=>`<button class="card" type="button" style="--c:${d.c}" data-index="${i}" aria-label="Tarjeta ${i+1}: ${d.a} por ${d.b}"><span class="small">RETO ${i+1}</span><span class="emoji">${d.e}</span><span class="equation">${d.a} × ${d.b}</span><span class="hint">Toca para descubrir ↗</span></button>`).join('');
+ $('cards').querySelectorAll('.card').forEach(btn=>btn.addEventListener('click',()=>{
+  const i=+btn.dataset.index,d=data[i],is=btn.classList.toggle('revealed');
+  btn.innerHTML=is?`<span class="small">RESPUESTA ${i+1}</span><span class="answer">${d.a*d.b}</span><span class="hint">¡Muy bien! 🎉<br>Toca para volver</span>`:`<span class="small">RETO ${i+1}</span><span class="emoji">${d.e}</span><span class="equation">${d.a} × ${d.b}</span><span class="hint">Toca para descubrir ↗</span>`;
+  is?revealed.add(i):revealed.delete(i);$('practiceCount').textContent=`Has descubierto ${revealed.size} de 10 tarjetas.`;
+ }));
+}
+$('resetPractice').onclick=()=>{revealed.clear();renderCards();$('practiceCount').textContent='Has descubierto 0 de 10 tarjetas.'};
+function switchTab(which){
+ $('practice').classList.toggle('hidden',which!=='practice');
+ $('quiz').classList.toggle('hidden',which!=='quiz');
+ $('results').classList.add('hidden');
+ $('practiceTab').classList.toggle('active',which==='practice');
+ $('quizTab').classList.toggle('active',which==='quiz');
+}
+$('practiceTab').onclick=()=>switchTab('practice');
+$('quizTab').onclick=()=>{switchTab('quiz');if(!quizOrder.length)startQuiz()};
+function choicesFor(correct){
+ const set=new Set([correct]);
+ while(set.size<4){let n=correct+Math.floor(Math.random()*15)-7;if(n>0&&n!==correct)set.add(n)}
+ return [...set].sort(()=>Math.random()-.5);
+}
+function startQuiz(){
+ quizOrder=[...data.keys()].sort(()=>Math.random()-.5);index=0;answers=[];selected=null;
+ $('studentName').disabled=false;$('studentName').value=$('studentName').value||'';
+ $('quiz').classList.remove('hidden');$('results').classList.add('hidden');renderQuestion();
+}
+function renderQuestion(){
+ const d=data[quizOrder[index]],correct=d.a*d.b;
+ $('questionNumber').textContent=`Pregunta ${index+1} de 10`;
+ $('liveScore').textContent=`Aciertos: ${answers.filter(x=>x.correct).length}`;
+ $('progressBar').style.width=`${index*10}%`;
+ $('quizEquation').textContent=`${d.a} × ${d.b} = ?`;
+ $('feedback').textContent='Elige una respuesta.';
+ $('nextQuestion').disabled=true;$('nextQuestion').textContent=index===9?'Ver resultado':'Siguiente →';
+ $('options').innerHTML=choicesFor(correct).map(n=>`<button class="option" type="button" data-value="${n}">${n}</button>`).join('');
+ $('options').querySelectorAll('button').forEach(btn=>btn.onclick=()=>{
+  if(selected!==null)return;selected=+btn.dataset.value;
+  $('options').querySelectorAll('button').forEach(b=>{b.disabled=true;if(+b.dataset.value===correct)b.classList.add('selected')});
+  const ok=selected===correct;
+  answers[index]={question:`${d.a} × ${d.b}`,chosen:selected,correct:correct,correctAnswer:ok};
+  $('feedback').textContent=ok?'¡Correcto! ⭐':'Esta vez no. La respuesta correcta es '+correct+'. ¡Sigue aprendiendo!';
+  $('nextQuestion').disabled=false;
+  $('liveScore').textContent=`Aciertos: ${answers.filter(x=>x&&x.correctAnswer).length}`;
+ });
+}
+$('nextQuestion').onclick=()=>{if(selected===null)return;if(index<9){index++;selected=null;renderQuestion()}else showResults()};
+function showResults(){
+ const total=answers.filter(x=>x.correctAnswer).length,grade=total*10;
+ $('quiz').classList.add('hidden');$('results').classList.remove('hidden');
+ $('resultName').textContent='Alumno(a): '+($('studentName').value.trim()||'Sin nombre');
+ $('scoreText').textContent=`${total} / 10`;
+ $('gradeText').textContent=`Calificación: ${grade}`;
+ $('resultMessage').textContent=total>=9?'¡Excelente trabajo! Dominas muy bien estas multiplicaciones.':total>=7?'¡Buen esfuerzo! Sigue practicando para mejorar.':total>=5?'Vas avanzando. Repasa las tablas y vuelve a intentarlo.':'¡No te rindas! Practica las tarjetas y vuelve a realizar la evaluación.';
+ $('resultDate').textContent='Fecha: '+new Date().toLocaleDateString('es-MX');
+ $('review').innerHTML=answers.map((x,i)=>`<p style="border-bottom:1px solid #eee;padding:7px 0;margin:0"><strong>${i+1}. ${x.question}</strong> · Tu respuesta: ${x.chosen} · ${x.correctAnswer?'✅ Correcta':'❌ Correcta: '+x.correct}</p>`).join('');
+ $('progressBar').style.width='100%';
+}
+$('restartQuiz').onclick=()=>{if(confirm('¿Deseas reiniciar la evaluación? Se borrarán las respuestas actuales.'))startQuiz()};
+$('again').onclick=()=>{startQuiz();$('results').classList.add('hidden');$('quiz').classList.remove('hidden')};
+$('printResult').onclick=()=>window.print();
+renderCards();
+</script>
+</body>
+</html>
